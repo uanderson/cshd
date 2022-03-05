@@ -49,7 +49,7 @@ function activate() {
   fi
 }
 
-IFS=';' read -ra ADDR <<<"$(get_conf 'activation')"
-for profile in "${ADDR[@]}"; do
+IFS=',' read -ra profiles <<<"$(get_conf 'activation')"
+for profile in "${profiles[@]}"; do
   activate "$profile"
 done
