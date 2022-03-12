@@ -52,21 +52,24 @@ function generate_gpg() {
   email="$(get_conf "gpg.email" "$1")"
   template="$(mktemp)"
 
-  cat >"$template" <<EOF
-    Key-Type: 1
-    Key-Length: 4096
-    Subkey-Type: 1
-    Subkey-Length: 4096
-    Name-Real: $name
-    Name-Email: $email
-    Expire-Date: 0
-    %no-protection
+  if [[ ! "$(gpg --list-secret-key)" == *"$email"* ]]; then
+    cat >"$template" <<EOF
+      Key-Type: 1
+      Key-Length: 4096
+      Subkey-Type: 1
+      Subkey-Length: 4096
+      Name-Real: $name
+      Name-Email: $email
+      Expire-Date: 0
+      %no-protection
 EOF
 
-  gpg --batch --generate-key "$template"
-  rm -f "$template"
+    gpg --batch --generate-key "$template"
 
-  commit_gpg "$email" "$1"
+    commit_gpg "$email" "$1"
+  fi
+
+  rm -f "$template"
 }
 
 # Generates a new branch and add the GPG key
@@ -82,6 +85,9 @@ function commit_gpg() {
   branch_name="blackbox/$(date +"%Y-%M-%d%T" | md5sum | head -c 7)"
 
   git checkout -b "$branch_name"
+  git config user.name "$(get_conf "git.name" "$1")"
+  git config user.email "$(get_conf "git.email" "$1")"
+
   "$BLACKBOX_HOME"/blackbox_addadmin "$1"
 
   git add .
