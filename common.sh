@@ -5,7 +5,10 @@
 : "${CSHD_CONF_FILE:=/etc/cshd/cshd.conf}"
 
 # Where are we?
-: "${BLACKBOX_HOME:="$(cd "${0%/*}" pwd)/.blackbox"}"
+: "${BLACKBOX_HOME:="$(
+  cd "${0%/*}"
+  pwd
+)"/.blackbox}"
 
 # Gets the configuration value for the environment.
 # When a profile is provided, it delegates the search
