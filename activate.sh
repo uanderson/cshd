@@ -84,9 +84,9 @@ function commit_gpg() {
   local branch_name
   branch_name="blackbox/$(date +"%Y-%M-%d%T" | md5sum | head -c 7)"
 
+  git config user.name "$(get_conf "git.name" "$2")"
+  git config user.email "$(get_conf "git.email" "$2")"
   git checkout -b "$branch_name"
-  git config user.name "$(get_conf "git.name" "$1")"
-  git config user.email "$(get_conf "git.email" "$1")"
 
   "$BLACKBOX_HOME"/blackbox_addadmin "$1"
 
