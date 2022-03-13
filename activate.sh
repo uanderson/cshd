@@ -1,15 +1,7 @@
 #!/bin/bash
 
 set -e
-
-SCRIPT_PATH="$(
-  cd -- "$(dirname "$0")" >/dev/null 2>&1
-  pwd -P
-)"
-
-BLACKBOX_HOME="$SCRIPT_PATH/.blackbox"
-
-source "$SCRIPT_PATH/common.sh"
+source "${0%/*}/common.sh"
 
 # Clones the remote profile repository.
 #
