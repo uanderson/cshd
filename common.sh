@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # CSHD's defaults
-: "${CSHD_HOME:="$HOME"/.cshd}"
+: "${CSHD_HOME:="$HOME"/cshd}"
 : "${CSHD_CONF_FILE:=/etc/cshd/cshd.conf}"
 
 # Where are we?
