@@ -3,6 +3,10 @@
 # CSHD's defaults
 : "${CSHD_HOME:="$HOME"/cshd}"
 : "${CSHD_CONF_FILE:=/etc/cshd/cshd.conf}"
+: "${CSHD_TEMPLATES:="$(
+  cd "${0%/*}"
+  pwd
+)"/.templates}"
 
 # Where are we?
 : "${BLACKBOX_HOME:="$(
@@ -21,9 +25,10 @@
 #
 # @public
 function get_conf() {
-  local conf_value
   local profile_conf_file
   local profile_conf_value
+  local local_conf_value
+  local system_conf_value
 
   if [[ ! -f "$CSHD_CONF_FILE" ]]; then
     fatal "Configuration file $CSHD_CONF_FILE not found"
@@ -34,13 +39,16 @@ function get_conf() {
   if [[ -z $2 ]]; then
     grep_conf "$CSHD_CONF_FILE" "$1"
   else
-    conf_value="$(grep_conf "$CSHD_CONF_FILE" "$2.$1")"
     profile_conf_value="$(grep_conf "$profile_conf_file" "$1")"
+    local_conf_value="$(grep_conf "$CSHD_CONF_FILE" "$2.$1")"
+    system_conf_value="$(grep_conf "$CSHD_CONF_FILE" "$1")"
 
-    if [[ -z "$profile_conf_value" ]]; then
-      echo "$conf_value"
-    else
+    if [[ -n "$profile_conf_value" ]]; then
       echo "$profile_conf_value"
+    elif [[ -n "$local_conf_value" ]]; then
+      echo "$local_conf_value"
+    else
+      echo "$system_conf_value"
     fi
   fi
 }

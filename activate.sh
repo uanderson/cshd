@@ -3,6 +3,23 @@
 set -e
 source "${0%/*}/common.sh"
 
+# Entry point to run this script.
+#
+# @private
+function run() {
+  local profile
+
+  IFS=',' read -ra profiles <<<"$(get_conf 'profiles')"
+
+  if [[ -z "$profiles" ]]; then
+    activate "default"
+  else
+    for profile in "${profiles[@]}"; do
+      activate "$profile"
+    done
+  fi
+}
+
 # Clones the remote profile repository.
 #
 # $1 - Profile name
@@ -45,19 +62,8 @@ function generate_gpg() {
   template="$(mktemp)"
 
   if [[ ! "$(gpg --list-secret-key)" == *"$email"* ]]; then
-    cat >"$template" <<EOF
-      Key-Type: 1
-      Key-Length: 4096
-      Subkey-Type: 1
-      Subkey-Length: 4096
-      Name-Real: $name
-      Name-Email: $email
-      Expire-Date: 0
-      %no-protection
-EOF
-
+    sed "s/\$name/$name/g; s/\$email/$email/g" "$CSHD_TEMPLATES/gpg/default.txt" | tee "$template" >/dev/null
     gpg --batch --generate-key "$template"
-
     commit_gpg "$email" "$1"
   fi
 
@@ -91,7 +97,4 @@ function commit_gpg() {
   git checkout "$(get_conf "repository.branch" "$2")"
 }
 
-IFS=',' read -ra profiles <<<"$(get_conf 'activation')"
-for profile in "${profiles[@]}"; do
-  activate "$profile"
-done
+run

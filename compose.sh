@@ -3,9 +3,26 @@
 set -e
 source "${0%/*}/common.sh"
 
+# Entry point to run this script.
+#
+# @private
+function run() {
+  local profile
+
+  IFS=',' read -ra profiles <<<"$(get_conf 'profiles')"
+
+  if [[ -z "$profiles" ]]; then
+    certify "default"
+  else
+    for profile in "${profiles[@]}"; do
+      certify "$profile"
+    done
+  fi
+}
+
 # Composes the stack for the profile.
 #
-# $1 - Profile name
+# $1 - Profile name (optional)
 #
 # @private
 function compose() {
@@ -48,7 +65,4 @@ function compose() {
   fi
 }
 
-IFS=',' read -ra profiles <<<"$(get_conf 'activation')"
-for profile in "${profiles[@]}"; do
-  compose "$profile"
-done
+run
