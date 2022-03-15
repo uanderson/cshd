@@ -12,10 +12,10 @@ function run() {
   IFS=',' read -ra profiles <<<"$(get_conf 'profiles')"
 
   if [[ -z "$profiles" ]]; then
-    certify "default"
+    compose "default"
   else
     for profile in "${profiles[@]}"; do
-      certify "$profile"
+      compose "$profile"
     done
   fi
 }
