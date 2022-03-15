@@ -3,7 +3,7 @@
 set -e
 source "${0%/*}/common.sh"
 
-# Entry point to run this script.
+# Where we start.
 #
 # @private
 function run() {
@@ -27,8 +27,8 @@ function run() {
 # certbot.email=x@usoar.es
 # certbot.domains=domain-a.com,domain-b.com
 #
-# domain-a.com.certbot.redirect=true
-# domain-b.com.certbot.redirect=false
+# domain-a.com.certbot.nginx.ssl-sidecar=true
+# domain-b.com.certbot.nginx.ssl-sidecar=false
 #
 # $1 - Profile name (optional)
 #
@@ -36,36 +36,25 @@ function run() {
 function certify() {
   local email
   local domain
-  local redirect
-  local command
+  local sidecar
+  local conf_file
 
   email="$(get_conf "certbot.email" "$1")"
   IFS=',' read -ra domains <<<"$(get_conf "certbot.domains" "$1")"
 
   for domain in "${domains[@]}"; do
-    redirect="$(get_conf "$domain.certbot.redirect" "$1")"
-    write_conf "$domain" "$redirect"
+    conf_file="/etc/nginx/conf.d/$domain.conf"
+    sidecar="$(get_conf "$domain.certbot.nginx.ssl-sidecar" "$1")"
 
-    command="sudo certbot -m $email -d $domain --nginx --agree-tos -n"
-    if [[ "$redirect" == "true" ]]; then command+=" --redirect"; else command+=" --no-redirect"; fi
+    sed "s/\$domain/$domain/g" "$CSHD_TEMPLATES/certbot/challenge.txt" | sudo tee "$conf_file" >/dev/null
+    sudo certbot --nginx --agree-tos --no-redirect -n -m "$email" -d "$domain"
 
-    eval "$command"
+    if [[ -z "$sidecar" ]] || [[ "$sidecar" == "false" ]]; then
+      sed "s/\$domain/$domain/g" "$CSHD_TEMPLATES/certbot/ssl.txt" | sudo tee "$conf_file" >/dev/null
+    fi
+
+    sudo nginx -s reload
   done
-}
-
-# Writes configuration file for each domain.
-#
-# $1 - Domain
-# $2 - Redirect
-#
-# @private
-function write_conf() {
-  local template_name
-
-  if [[ "$2" == "true" ]]; then template_name="redirect"; else template_name="no-redirect"; fi
-  sed "s/\$domain/$1/g" "$CSHD_TEMPLATES/certbot/$template_name.txt" | sudo tee "/etc/nginx/conf.d/$1.conf" >/dev/null
-
-  sudo nginx -s reload
 }
 
 run

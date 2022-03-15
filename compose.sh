@@ -3,7 +3,7 @@
 set -e
 source "${0%/*}/common.sh"
 
-# Entry point to run this script.
+# Where we start.
 #
 # @private
 function run() {
