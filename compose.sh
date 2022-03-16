@@ -51,7 +51,7 @@ function compose() {
 
     while IFS="" read -r encrypted_file || [ -n "$encrypted_file" ]; do
       "$BLACKBOX_HOME"/blackbox_decrypt_file "$encrypted_file"
-    done <.blackbox/blackbox_files.txt
+    done <.blackbox/blackbox-files.txt
 
     # The `docker.env`'s existence means that the environment
     # was able to decrypt the secrets and we can proceed
