@@ -38,9 +38,14 @@ function activate() {
     "$(get_conf "repository.uri" "$1")" \
     "$profile_dir"
 
+  "$profile_dir"/.hooks/preactivate.sh >/dev/null 2>&1
   cd "$profile_dir" || fatal "Profile directory $profile_dir not found"
 
-  generate_gpg "$1"
+  if [[ "$(get_conf "gpg.generate" "$1")" != "false" ]]; then
+    generate_gpg "$1"
+  fi
+
+  "$profile_dir"/.hooks/postactivate.sh >/dev/null 2>&1
 }
 
 # Generates a GPG key for the name and e-mail
@@ -64,7 +69,10 @@ function generate_gpg() {
   if [[ ! "$(gpg --list-secret-key)" == *"$email"* ]]; then
     sed "s/\$name/$name/g; s/\$email/$email/g" "$CSHD_TEMPLATES/gpg/default.txt" | tee "$template" >/dev/null
     gpg --batch --generate-key "$template"
-    commit_gpg "$email" "$1"
+
+    if [[ "$(get_conf "gpg.commit" "$1")" != "false" ]]; then
+      commit_gpg "$email" "$1"
+    fi
   fi
 
   rm -f "$template"
