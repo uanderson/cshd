@@ -38,14 +38,15 @@ function activate() {
     "$(get_conf "repository.uri" "$1")" \
     "$profile_dir"
 
-  "$profile_dir"/.hooks/preactivate.sh >/dev/null 2>&1
+  run_hook "$1" "preactivate"
+
   cd "$profile_dir" || fatal "Profile directory $profile_dir not found"
 
   if [[ "$(get_conf "gpg.generate" "$1")" != "false" ]]; then
     generate_gpg "$1"
   fi
 
-  "$profile_dir"/.hooks/postactivate.sh >/dev/null 2>&1
+  run_hook "$1" "postactivate"
 }
 
 # Generates a GPG key for the name and e-mail

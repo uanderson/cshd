@@ -53,6 +53,28 @@ function get_conf() {
   fi
 }
 
+# Verifies if the hook exists and executes
+# it if that's the case.
+#
+# $1 - Profile directory
+# $2 - Hook to be executed
+#
+# Returns the property value
+#
+# @public
+function run_hook() {
+  local profile_dir
+  profile_dir="$CSHD_HOME/profiles/$1"
+
+  local hook
+  hook="$profile_dir/.hooks/$2.sh"
+
+  if [[ -f "$hook" ]]; then
+    # shellcheck disable=SC1090
+    source "$hook"
+  fi
+}
+
 # Gets the configuration from the file.
 #
 # $1 - Property name
