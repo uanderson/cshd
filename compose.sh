@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -e
 source "${0%/*}/common.sh"
 
 # Where we start.
@@ -28,23 +27,25 @@ function run() {
 function compose() {
   local profile_dir
   local profile_branch
-  local local_revision
-  local origin_revision
+  local profile_behind
+  local profile_behind_count
 
   profile_dir="$CSHD_HOME/profiles/$1"
   profile_branch="$(get_conf "repository.branch" "$1")"
 
   cd "$profile_dir" || fatal "Profile directory not found"
 
-  local_revision="$(git rev-parse "$profile_branch")"
-  origin_revision="$(git rev-parse origin)"
+  profile_behind_count="$(git rev-list --left-right "${profile_branch}"...origin/"${profile_branch}" 2> /dev/null | grep -c '^>')"
 
-  # Fetches any new updates to the stack
-  git fetch origin "$profile_branch"
+  if [[ "$profile_behind_count" = 0 ]]; then
+    profile_behind_count=''
+  else
+    profile_behind=true
+  fi
 
-  # If the origin revision is different from what
-  # we have, pull the changes and update the stack
-  if [[ "$local_revision" != "$origin_revision" ]]; then
+  # Execute if there are changes
+  if [[ -n "$profile_behind" ]]; then
+    git fetch origin "$profile_branch"
     git reset --hard
     git clean --force -d -x
     git pull
