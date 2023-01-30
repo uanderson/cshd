@@ -27,32 +27,26 @@ function run() {
 function compose() {
   local profile_dir
   local profile_branch
-  local profile_behind
-  local profile_behind_count
 
   profile_dir="$CSHD_HOME/profiles/$1"
   profile_branch="$(get_conf "repository.branch" "$1")"
 
   cd "$profile_dir" || fatal "Profile directory not found"
 
-  profile_behind_count="$(git rev-list --left-right "${profile_branch}"...origin/"${profile_branch}" 2> /dev/null | grep -c '^>')"
+  local remote_branch
+  local local_branch
 
-  if [[ "$profile_behind_count" = 0 ]]; then
-    profile_behind_count=''
-  else
-    profile_behind=true
-  fi
+  local_branch=$(git rev-parse --abbrev-ref --symbolic-full-name @)
+  remote_branch=$(git rev-parse --abbrev-ref --symbolic-full-name @{u})
 
-  # Execute if there are changes
-  if [[ -n "$profile_behind" ]]; then
-    git fetch origin "$profile_branch"
-    git reset --hard
-    git clean --force -d -x
-    git pull
+  if [[ "$local_branch" = "$remote_branch" ]]; then
+    echo "No remote changes found"
+  elif [[ "$(git rev-list --left-right $local_branch...$remote_branch)" ]]; then
+    git reset --hard origin/"$profile_branch"
 
-    while IFS="" read -r encrypted_file || [ -n "$encrypted_file" ]; do
-      "$BLACKBOX_HOME"/blackbox_decrypt_file "$encrypted_file"
-    done <.blackbox/blackbox-files.txt
+    git pull --force
+
+    "$BLACKBOX_HOME"/blackbox_decrypt_all_files
 
     # The `docker.env`'s existence means that the environment
     # was able to decrypt the secrets and we can proceed
